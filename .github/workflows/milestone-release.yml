@@ -1,0 +1,119 @@
+# Cerrar un milestone = publicar su versión.
+#
+# Convención: el título del milestone empieza con la versión semántica,
+# p. ej. "v0.2.0 Seguridad y usuarios" -> tag v0.2.0, release "v0.2.0 — Seguridad y usuarios".
+#
+# Garantías:
+#   - Sólo publica milestones cuyo título empieza con vX.Y.Z.
+#   - Si quedan issues abiertos, REABRE el milestone y falla indicando cuáles.
+#   - Es idempotente: si la release ya existe no hace nada; si el tag existe
+#     pero la release falló, puede reintentarse con "Run workflow".
+name: Milestone release
+
+on:
+  milestone:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: Número del milestone (debe estar cerrado). Útil para reintentar una release fallida.
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  issues: write
+  packages: write
+
+concurrency:
+  group: milestone-release-${{ github.event.milestone.number || inputs.milestone }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validar milestone y crear tag
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      tag: ${{ steps.check.outputs.tag }}
+      title: ${{ steps.check.outputs.title }}
+      name: ${{ steps.check.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - id: check
+        name: Validar y etiquetar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.milestone.number || inputs.milestone }}
+        run: |
+          set -euo pipefail
+          ms=$(gh api "repos/$REPO/milestones/$NUMBER")
+          title=$(jq -r .title <<<"$ms")
+          state=$(jq -r .state <<<"$ms")
+          open=$(jq -r .open_issues <<<"$ms")
+          echo "Milestone #$NUMBER: '$title' (state=$state, open=$open)"
+
+          # 1) El título debe empezar con una versión semántica.
+          tag=$(grep -oE '^v[0-9]+\.[0-9]+\.[0-9]+' <<<"$title" || true)
+          if [[ -z "$tag" ]]; then
+            echo "::notice::'$title' no empieza con vX.Y.Z; no se publica ninguna release."
+            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          name=$(sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+[[:space:]]*[-—:]?[[:space:]]*//' <<<"$title")
+
+          # 2) Debe estar cerrado (relevante al ejecutarlo manualmente).
+          if [[ "$state" != "closed" ]]; then
+            echo "::error::El milestone '$title' está abierto. Ciérralo para publicar."
+            exit 1
+          fi
+
+          # 3) No debe quedar trabajo pendiente: se reabre y se informa.
+          if (( open > 0 )); then
+            gh api -X PATCH "repos/$REPO/milestones/$NUMBER" -f state=open >/dev/null
+            {
+              echo "### ❌ No se publicó $tag"
+              echo "El milestone **$title** tiene $open issue(s) abierto(s), así que se **reabrió**:"
+              gh issue list -R "$REPO" --milestone "$title" --state open --json number,title \
+                --jq '.[] | "- #\(.number) \(.title)"'
+              echo; echo "Ciérralos (o muévelos a otro milestone) y vuelve a cerrar el milestone."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::'$title' tiene $open issue(s) abierto(s); el milestone se reabrió."
+            exit 1
+          fi
+
+          # 4) Idempotencia.
+          if gh release view "$tag" -R "$REPO" >/dev/null 2>&1; then
+            echo "::notice::La release $tag ya existe; nada que hacer."
+            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::notice::El tag $tag ya existe en $(git rev-parse --short "$tag^{commit}"); se reutiliza."
+          else
+            sha=$(git rev-parse HEAD)
+            gh api "repos/$REPO/git/refs" -f ref="refs/tags/$tag" -f sha="$sha" >/dev/null
+            echo "::notice::Tag $tag creado en $(git rev-parse --short HEAD) (${{ github.event.repository.default_branch }})."
+          fi
+
+          {
+            echo "tag=$tag"
+            echo "title=$title"
+            echo "name=$name"
+            echo "publish=true"
+          } >> "$GITHUB_OUTPUT"
+          echo "### 🚀 Publicando $tag — $name" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Publicar
+    needs: prepare
+    if: needs.prepare.outputs.publish == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.prepare.outputs.tag }}
+      milestone: ${{ needs.prepare.outputs.title }}
+      name: ${{ needs.prepare.outputs.name }}
+    secrets: inherit

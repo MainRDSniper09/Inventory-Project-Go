@@ -1,0 +1,18 @@
+# Categorías de las notas generadas por GitHub (releases/generate-notes),
+# usadas en la sección "Cambios incluidos" de cada release.
+changelog:
+  exclude:
+    labels: [skip-changelog]
+  categories:
+    - title: ✨ Funcionalidades
+      labels: [type:feature]
+    - title: 🐛 Correcciones
+      labels: [type:bug]
+    - title: 📚 Documentación
+      labels: [type:docs]
+    - title: 🔧 Mantenimiento e infraestructura
+      labels: [type:chore, type:test]
+    - title: ⬆️ Dependencias
+      labels: [dependencies]
+    - title: Otros cambios
+      labels: ["*"]

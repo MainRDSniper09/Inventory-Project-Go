@@ -1,48 +1,99 @@
+# Publica una versión: binarios (GoReleaser) + imagen Docker multi-arch.
+#
+# Se puede disparar de dos formas:
+#   1. Automática: al cerrar un milestone (ver milestone-release.yml, que
+#      llama a este workflow con `workflow_call`).
+#   2. Manual: haciendo push de un tag `vX.Y.Z`.
 name: Release
 
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag a publicar (vX.Y.Z); debe existir en el repositorio
+        required: true
+        type: string
+      milestone:
+        description: Título completo del milestone (para listar sus issues en las notas)
+        required: false
+        type: string
+        default: ""
+      name:
+        description: Nombre legible de la versión (p. ej. "MVP")
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
   packages: write
 
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+  MILESTONE: ${{ inputs.milestone }}
+
 jobs:
   goreleaser:
+    name: Binarios y release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.TAG }}
           fetch-depth: 0
+
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+
+      - name: Generar notas de la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: bash .github/scripts/release-notes.sh "$TAG" "$MILESTONE" > "$RUNNER_TEMP/notes.md"
+
+      - name: Vista previa de las notas
+        run: cat "$RUNNER_TEMP/notes.md" >> "$GITHUB_STEP_SUMMARY"
+
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: "~> v2"
-          args: release --clean
+          args: release --clean --release-notes "${{ runner.temp }}/notes.md"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GORELEASER_CURRENT_TAG: ${{ env.TAG }}
+          # Nombre visible de la release: "v0.1.0 — MVP" si viene de un milestone.
+          RELEASE_NAME: ${{ inputs.name && format('{0} — {1}', env.TAG, inputs.name) || env.TAG }}
 
   docker:
+    name: Imagen Docker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
       - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/inventory-go
+          # `value` permite calcular las etiquetas aunque el evento no sea un push de tag.
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ env.TAG }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG }}
+            type=raw,value=latest
       - uses: docker/build-push-action@v7
         with:
           context: .
@@ -51,5 +102,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ env.TAG }}
             COMMIT=${{ github.sha }}

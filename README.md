@@ -258,9 +258,23 @@ Cobertura actual: dominio ~97 %, servicios ~91 %, HTTP ~88 %, SQLite ~76 %.
 
 La imagen es **distroless** (sin shell), corre como **usuario no-root**, con **sistema de archivos de sólo lectura** en Compose y `HEALTHCHECK` integrado.
 
-**Publicar una versión**: `git tag v0.1.0 && git push --tags` → GitHub Actions ejecuta GoReleaser (binarios para Linux/Windows/macOS × amd64/arm64) y publica la imagen multi-arch en `ghcr.io`.
+### Publicar una versión: cerrar el milestone
 
-📘 Decisiones: [ADR-0004](docs/adr/0004-distribucion-binario-y-docker.md)
+Cada **milestone** es una versión (`v0.2.0 Seguridad y usuarios`). **Al cerrarlo en GitHub se publica la release automáticamente**:
+
+```mermaid
+flowchart LR
+  A["Cerrar milestone<br/>v0.2.0 Seguridad y usuarios"] --> B{¿Issues abiertos?}
+  B -- sí --> R["Se reabre el milestone<br/>y se listan los pendientes"]
+  B -- no --> C["Tag v0.2.0 en main"]
+  C --> D["GoReleaser<br/>binarios Linux/Windows/macOS<br/>amd64 + arm64"]
+  C --> E["Imagen Docker multi-arch<br/>ghcr.io · :0.2.0 :0.2 :latest"]
+  D --> F["Release 'v0.2.0 — Seguridad y usuarios'<br/>notas: issues por tipo + PRs"]
+```
+
+También funciona `git tag vX.Y.Z && git push --tags`, y desde *Actions → Milestone release → Run workflow* se puede reintentar una release fallida. Detalle en [CONTRIBUTING](CONTRIBUTING.md#publicar-una-versión).
+
+📘 Decisiones: [ADR-0004](docs/adr/0004-distribucion-binario-y-docker.md) · [ADR-0005](docs/adr/0005-release-por-milestone.md)
 
 ## Roadmap
 
@@ -276,6 +290,7 @@ La imagen es **distroless** (sin shell), corre como **usuario no-root**, con **s
 | [0002](docs/adr/0002-sqlite-go-puro.md) | SQLite con driver Go puro (sin CGO) |
 | [0003](docs/adr/0003-triggers-en-lugar-de-stored-procedures.md) | Triggers y vistas como equivalente a stored procedures |
 | [0004](docs/adr/0004-distribucion-binario-y-docker.md) | Distribución como binario único y Docker |
+| [0005](docs/adr/0005-release-por-milestone.md) | Una release por milestone, publicada al cerrarlo |
 
 ## Contribuir
 

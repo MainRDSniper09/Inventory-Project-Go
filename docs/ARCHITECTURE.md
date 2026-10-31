@@ -381,7 +381,8 @@ flowchart LR
     end
     subgraph GH["GitHub"]
         CI["Actions CI<br/>vet · test (Linux/Win/macOS)<br/>lint · docker smoke test"]
-        REL["Actions Release<br/>on tag v*.*.*"]
+        MS["Milestone cerrado<br/>vX.Y.Z ..."]
+        REL["Actions Release<br/>(reutilizable)"]
         GR["GoReleaser<br/>binarios linux/win/mac<br/>amd64 + arm64"]
         GHCR["ghcr.io<br/>imagen multi-arch"]
     end
@@ -390,7 +391,8 @@ flowchart LR
         DOCK["Contenedor distroless<br/>usuario nonroot · volumen /data"]
     end
     SRC -- push/PR --> CI
-    SRC -- git tag --> REL
+    MS -- "valida + crea tag" --> REL
+    SRC -. "git tag (hotfix)" .-> REL
     REL --> GR --> BIN
     REL --> GHCR --> DOCK
 ```
