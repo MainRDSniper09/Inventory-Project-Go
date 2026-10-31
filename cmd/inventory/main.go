@@ -21,6 +21,7 @@ import (
 
 	httpadapter "github.com/MainRDSniper09/Inventory-Project-Go/internal/adapters/http"
 	"github.com/MainRDSniper09/Inventory-Project-Go/internal/adapters/sqlite"
+	"github.com/MainRDSniper09/Inventory-Project-Go/internal/core/ports"
 	"github.com/MainRDSniper09/Inventory-Project-Go/internal/core/services"
 	"github.com/MainRDSniper09/Inventory-Project-Go/internal/platform/clock"
 	"github.com/MainRDSniper09/Inventory-Project-Go/internal/platform/config"
@@ -76,10 +77,10 @@ func run(cfg config.Config, log *slog.Logger) error {
 		return err
 	}
 
-	app := wire(db)
+	app := wire(db, clock.System{})
 
 	if cfg.Seed {
-		if err := seed(ctx, app); err != nil {
+		if err := seed(ctx, db, time.Now()); err != nil {
 			return fmt.Errorf("seed: %w", err)
 		}
 	}
@@ -117,8 +118,7 @@ func run(cfg config.Config, log *slog.Logger) error {
 }
 
 // wire construye el grafo de dependencias (inyección manual, sin magia).
-func wire(db *sql.DB) httpadapter.Services {
-	clk := clock.System{}
+func wire(db *sql.DB, clk ports.Clock) httpadapter.Services {
 	tx := sqlite.NewTxManager(db)
 	products := sqlite.NewProductRepository(db)
 	categories := sqlite.NewCategoryRepository(db)
