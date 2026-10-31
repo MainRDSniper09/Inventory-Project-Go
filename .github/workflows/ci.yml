@@ -24,6 +24,8 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Test
+        # bash en todos los SO: PowerShell parte "-coverprofile=coverage.out" en dos argumentos.
+        shell: bash
         run: go test -coverprofile=coverage.out ./...
       - name: Coverage summary
         if: matrix.os == 'ubuntu-latest'

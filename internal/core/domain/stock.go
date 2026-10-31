@@ -8,6 +8,7 @@ import (
 // MovementType clasifica un movimiento de inventario.
 type MovementType string
 
+// Tipos de movimiento admitidos por el kardex.
 const (
 	MovementIn     MovementType = "IN"     // entrada de mercancía (compra, devolución)
 	MovementOut    MovementType = "OUT"    // salida manual (merma, daño)

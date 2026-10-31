@@ -67,7 +67,11 @@ func run(cfg config.Config, log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Error("close database", "err", err)
+		}
+	}()
 	if err := sqlite.Migrate(ctx, db); err != nil {
 		return err
 	}
@@ -150,7 +154,7 @@ func runHealthcheck(addr string) int {
 		fmt.Fprintln(os.Stderr, "healthcheck:", err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		fmt.Fprintln(os.Stderr, "healthcheck: status", resp.StatusCode)
 		return 1
