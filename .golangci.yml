@@ -1,0 +1,32 @@
+version: "2"
+run:
+  timeout: 5m
+linters:
+  enable:
+    - bodyclose
+    - errorlint
+    - gocritic
+    - gosec
+    # misspell no se habilita: sólo conoce inglés y los comentarios del
+    # proyecto están en español a propósito (es material didáctico).
+    - nilerr
+    - revive
+    - sqlclosecheck
+    - unconvert
+  settings:
+    errcheck:
+      exclude-functions:
+        # Los errores de iteración se revisan con rows.Err(), que es lo
+        # idiomático; el error de Close es redundante en ese caso.
+        - (*database/sql.Rows).Close
+    gosec:
+      excludes:
+        - G202 # concatenación SQL controlada (sólo placeholders "?"), ver sale_repo.go
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [gosec, errcheck]
+formatters:
+  enable:
+    - gofmt
+    - goimports

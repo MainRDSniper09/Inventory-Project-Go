@@ -1,0 +1,35 @@
+name: 🐛 Bug
+description: Reporta un comportamiento incorrecto
+labels: ["type:bug", "status:triage"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: ¿Qué pasó?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      placeholder: |
+        1. curl -X POST ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamiento esperado
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión
+      description: Salida de `inventory -version`
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Forma de ejecución
+      options: [Binario, Docker, go run]

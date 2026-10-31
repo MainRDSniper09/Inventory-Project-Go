@@ -1,0 +1,19 @@
+# Binarios
+/bin/
+/dist/
+*.exe
+
+# Base de datos local
+*.db
+*.db-shm
+*.db-wal
+
+# Cobertura
+coverage.out
+coverage.html
+
+# Editores / SO
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

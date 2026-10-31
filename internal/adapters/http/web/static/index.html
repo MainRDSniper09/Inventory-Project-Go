@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario Go</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">▣</span> Inventario<span class="muted">·Go</span></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="dashboard">Dashboard</button>
+    <button class="tab" data-view="products">Productos</button>
+    <button class="tab" data-view="sales">Ventas</button>
+    <button class="tab" data-view="reports">Reportes</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ======================= DASHBOARD ======================= -->
+  <section id="view-dashboard" class="view">
+    <div class="toolbar">
+      <h1>Dashboard</h1>
+      <form id="dash-filter" class="inline">
+        <label>Desde <input type="date" name="from"></label>
+        <label>Hasta <input type="date" name="to"></label>
+        <button class="btn">Aplicar</button>
+      </form>
+    </div>
+    <div id="kpis" class="kpis"></div>
+    <div class="grid2">
+      <article class="card">
+        <h2>Ingresos por día</h2>
+        <div id="daily-chart" class="chart"></div>
+      </article>
+      <article class="card">
+        <h2>Más vendidos</h2>
+        <table class="table"><thead><tr><th>SKU</th><th>Producto</th><th class="num">Unid.</th><th class="num">Ingresos</th></tr></thead>
+          <tbody id="top-body"></tbody></table>
+      </article>
+    </div>
+    <article class="card">
+      <h2>Stock bajo <span id="low-threshold" class="muted"></span></h2>
+      <table class="table"><thead><tr><th>SKU</th><th>Producto</th><th class="num">Existencia</th></tr></thead>
+        <tbody id="low-body"></tbody></table>
+    </article>
+  </section>
+
+  <!-- ======================= PRODUCTOS ======================= -->
+  <section id="view-products" class="view" hidden>
+    <div class="toolbar">
+      <h1>Productos</h1>
+      <div class="inline">
+        <input id="product-search" type="search" placeholder="Buscar SKU o nombre…">
+        <button id="new-category" class="btn ghost">+ Categoría</button>
+        <button id="new-product" class="btn">+ Producto</button>
+      </div>
+    </div>
+    <article class="card">
+      <div class="scroll">
+      <table class="table">
+        <thead><tr><th>SKU</th><th>Nombre</th><th>Categoría</th><th class="num">Precio</th><th class="num">Existencia</th><th></th></tr></thead>
+        <tbody id="products-body"></tbody>
+      </table>
+      </div>
+    </article>
+  </section>
+
+  <!-- ======================= VENTAS ======================= -->
+  <section id="view-sales" class="view" hidden>
+    <div class="toolbar"><h1>Ventas</h1></div>
+    <div class="grid2">
+      <article class="card">
+        <h2>Registrar venta</h2>
+        <form id="sale-form">
+          <div id="sale-lines"></div>
+          <button type="button" id="add-line" class="btn ghost">+ Línea</button>
+          <label class="block">Notas <input name="notes" maxlength="200"></label>
+          <div class="row-between">
+            <strong>Total estimado: <span id="sale-total">0.00</span></strong>
+            <button class="btn">Registrar</button>
+          </div>
+        </form>
+      </article>
+      <article class="card">
+        <h2>Últimas ventas (30 días)</h2>
+        <div class="scroll">
+        <table class="table"><thead><tr><th>#</th><th>Fecha</th><th class="num">Unid.</th><th class="num">Total</th><th>Notas</th></tr></thead>
+          <tbody id="sales-body"></tbody></table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ======================= REPORTES ======================= -->
+  <section id="view-reports" class="view" hidden>
+    <div class="toolbar">
+      <h1>Reporte de ventas</h1>
+      <form id="report-filter" class="inline">
+        <label>Desde <input type="date" name="from" required></label>
+        <label>Hasta <input type="date" name="to" required></label>
+        <button class="btn">Ver</button>
+        <a id="report-csv" class="btn ghost" href="#">Descargar CSV</a>
+      </form>
+    </div>
+    <article class="card">
+      <div class="scroll">
+      <table class="table"><thead><tr><th>Venta</th><th>Fecha</th><th>SKU</th><th>Producto</th><th class="num">Cant.</th><th class="num">P. unit.</th><th class="num">Subtotal</th></tr></thead>
+        <tbody id="report-body"></tbody>
+        <tfoot><tr><th colspan="4">Total</th><th class="num" id="report-units"></th><th></th><th class="num" id="report-total"></th></tr></tfoot>
+      </table>
+      </div>
+    </article>
+  </section>
+</main>
+
+<!-- ======================= DIÁLOGOS ======================= -->
+<dialog id="product-dialog">
+  <form id="product-form" method="dialog">
+    <h2 id="product-dialog-title">Producto</h2>
+    <input type="hidden" name="id">
+    <label class="block">SKU <input name="sku" required maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_\-]*"></label>
+    <label class="block">Nombre <input name="name" required maxlength="120"></label>
+    <label class="block">Descripción <textarea name="description" maxlength="500" rows="2"></textarea></label>
+    <label class="block">Categoría <select name="category_id"></select></label>
+    <div class="grid2 tight">
+      <label class="block">Precio <input name="price" type="number" min="0" step="0.01" required></label>
+      <label class="block" id="initial-stock-field">Stock inicial <input name="initial_stock" type="number" min="0" step="1" value="0"></label>
+    </div>
+    <p class="error" id="product-error"></p>
+    <div class="row-end"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn">Guardar</button></div>
+  </form>
+</dialog>
+
+<dialog id="movement-dialog">
+  <form id="movement-form" method="dialog">
+    <h2>Movimiento de inventario</h2>
+    <p class="muted" id="movement-product"></p>
+    <input type="hidden" name="product_id">
+    <label class="block">Tipo
+      <select name="type">
+        <option value="IN">Entrada (+)</option>
+        <option value="OUT">Salida (−)</option>
+        <option value="ADJUST">Ajuste (±)</option>
+      </select>
+    </label>
+    <label class="block">Cantidad <input name="quantity" type="number" step="1" required></label>
+    <label class="block">Motivo <input name="reason" maxlength="200"></label>
+    <p class="error" id="movement-error"></p>
+    <h3>Kardex reciente</h3>
+    <div class="scroll short"><table class="table"><tbody id="movements-body"></tbody></table></div>
+    <div class="row-end"><button type="button" class="btn ghost" data-close>Cerrar</button><button class="btn">Registrar</button></div>
+  </form>
+</dialog>
+
+<dialog id="category-dialog">
+  <form id="category-form" method="dialog">
+    <h2>Nueva categoría</h2>
+    <label class="block">Nombre <input name="name" required maxlength="60"></label>
+    <label class="block">Descripción <input name="description"></label>
+    <p class="error" id="category-error"></p>
+    <div class="row-end"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn">Guardar</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+</body>
+</html>
