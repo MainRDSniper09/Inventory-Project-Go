@@ -1,0 +1,27 @@
+name: ✨ Funcionalidad
+description: Propón una nueva funcionalidad o mejora
+labels: ["type:feature", "status:triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema / motivación
+      description: ¿Qué necesidad resuelve? ¿Quién la tiene?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+      description: Describe la solución. Si aplica, indica qué capa del hexágono se ve afectada (dominio, servicio, puerto, adaptador).
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      placeholder: |
+        - [ ] ...
+        - [ ] Pruebas que cubran el caso
+    validations:
+      required: true

@@ -1,0 +1,22 @@
+services:
+  inventory:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+    image: inventory-go:local
+    container_name: inventory-go
+    ports:
+      - "8080:8080"
+    environment:
+      INVENTORY_LOG_LEVEL: info
+      INVENTORY_SEED: "${INVENTORY_SEED:-false}"
+    volumes:
+      - inventory-data:/data # la BD SQLite persiste entre reinicios
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  inventory-data:

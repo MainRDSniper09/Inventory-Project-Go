@@ -1,0 +1,10 @@
+.git
+.github
+docs
+dist
+bin
+*.db
+*.db-*
+coverage.*
+*.md
+!README.md
