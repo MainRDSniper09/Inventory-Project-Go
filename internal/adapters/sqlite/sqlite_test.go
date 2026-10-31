@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -262,6 +263,10 @@ func TestSale_CreateDecrementsStockAndComputesTotal(t *testing.T) {
 	movs, _ := r.stock.ListMovements(ctx, a.ID, 10)
 	if movs[0].Type != domain.MovementSale || movs[0].Delta != -4 || movs[0].SaleItemID == nil {
 		t.Fatalf("expected SALE movement first, got %+v", movs[0])
+	}
+	// Trigger reemplazado por la migración 0002.
+	if want := fmt.Sprintf("venta #%d", sale.ID); movs[0].Reason != want {
+		t.Fatalf("expected reason %q, got %q", want, movs[0].Reason)
 	}
 }
 

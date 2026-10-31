@@ -114,7 +114,7 @@ BEGIN
      WHERE id = NEW.sale_id;
 
     INSERT INTO stock_movements (product_id, type, delta, reason, sale_item_id, created_at)
-    VALUES (NEW.product_id, 'SALE', -NEW.quantity, 'venta #' || NEW.sale_id, NEW.id,
+    VALUES (NEW.product_id, 'SALE', -NEW.quantity, 'sale #' || NEW.sale_id, NEW.id,
             (SELECT created_at FROM sales WHERE id = NEW.sale_id));
 END;
 
