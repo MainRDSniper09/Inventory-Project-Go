@@ -63,7 +63,7 @@ func (s *ProductService) Create(ctx context.Context, cmd ports.CreateProductCmd)
 			return err
 		}
 		if cmd.InitialStock > 0 {
-			m, err := domain.NewManualMovement(p.ID, domain.MovementIn, cmd.InitialStock, "initial stock", now)
+			m, err := domain.NewManualMovement(p.ID, domain.MovementIn, cmd.InitialStock, "stock inicial", now)
 			if err != nil {
 				return err
 			}

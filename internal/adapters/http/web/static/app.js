@@ -3,7 +3,9 @@
 "use strict";
 
 const $ = (sel, root = document) => root.querySelector(sel);
-const money = (cents) => (cents / 100).toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// useGrouping "always": en español, por defecto no se agrupan los números de 4 dígitos (9337,60).
+const money = (cents) =>
+  (cents / 100).toLocaleString("es", { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: "always" });
 const isoDay = (d) => d.toISOString().slice(0, 10);
 
 let products = [];

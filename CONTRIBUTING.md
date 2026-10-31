@@ -44,6 +44,7 @@ Tipos: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`
 | Caso de uso | `internal/core/services/services_test.go` (con fakes) |
 | SQL / migración / trigger | `internal/adapters/sqlite/sqlite_test.go` |
 | Endpoint | `internal/adapters/http/http_test.go` |
+| UI (HTML/CSS/JS) | `scripts/screenshots/capture.mjs` — luego ejecuta `bash scripts/screenshots/run.sh` y sube las capturas actualizadas de `docs/images/` |
 
 ## Etiquetas de Issues
 

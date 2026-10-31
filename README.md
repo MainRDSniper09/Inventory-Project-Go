@@ -13,6 +13,7 @@ Nació como proyecto de aprendizaje: el código está comentado en español expl
 ## Contenido
 
 - [Funcionalidades](#funcionalidades)
+- [Capturas](#capturas)
 - [Inicio rápido](#inicio-rápido)
 - [Arquitectura](#arquitectura)
 - [Base de datos](#base-de-datos)
@@ -34,6 +35,56 @@ Nació como proyecto de aprendizaje: el código está comentado en español expl
 - 📈 **Dashboard**: ventas, unidades vendidas, ingresos, valor del inventario, ventas por día, productos más vendidos y alertas de stock bajo.
 - 📄 **Reportes** de ventas por rango de fechas en **JSON** o **CSV** (protegido contra *CSV injection*).
 - 🖥️ **UI web** embebida en el binario, con tema claro/oscuro.
+
+## Capturas
+
+> Capturas **reales**, generadas automáticamente con [Playwright](https://playwright.dev) recorriendo la UI: crear una categoría y un producto, registrar movimientos, vender y exportar. El mismo script sirve como prueba de humo de la interfaz: falla si hay errores de JavaScript o si un flujo no produce el resultado esperado. Para regenerarlas: `bash scripts/screenshots/run.sh` (sólo requiere Docker).
+
+### Dashboard
+
+Indicadores del periodo, ingresos por día, productos más vendidos y alertas de stock bajo.
+
+![Dashboard con KPIs, ingresos por día, más vendidos y stock bajo](docs/images/dashboard.png)
+
+<table>
+  <tr>
+    <th width="70%">Tema oscuro (automático según el sistema)</th>
+    <th>Móvil</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/dashboard-dark.png" alt="Dashboard en tema oscuro"></td>
+    <td><img src="docs/images/dashboard-mobile.png" alt="Dashboard en un teléfono"></td>
+  </tr>
+</table>
+
+### Productos
+
+Catálogo con búsqueda por SKU o nombre, existencia en tiempo real y acciones de stock, edición y archivado.
+
+![Listado de productos](docs/images/products.png)
+
+<table>
+  <tr>
+    <th>Alta de producto con stock inicial</th>
+    <th>Movimiento de inventario y kardex</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/product-dialog.png" alt="Formulario de nuevo producto"></td>
+    <td><img src="docs/images/inventory-movement.png" alt="Ajuste de inventario con historial del kardex"></td>
+  </tr>
+</table>
+
+### Ventas
+
+Venta de varias líneas con total estimado. El precio lo pone el servidor desde el catálogo y el stock se descuenta en la misma transacción.
+
+![Registro de venta y últimas ventas](docs/images/sales.png)
+
+### Reportes
+
+Detalle de ventas por rango de fechas, con descarga en CSV.
+
+![Reporte de ventas](docs/images/reports.png)
 
 ## Inicio rápido
 
@@ -192,6 +243,7 @@ make cover             # reporte HTML
 | Unitarias de casos de uso | `core/services/services_test.go` | Orquestación con *fakes* en memoria (sin BD) |
 | Integración | `adapters/sqlite/sqlite_test.go` | Triggers, constraints, rollback, reportes contra SQLite real |
 | Extremo a extremo | `adapters/http/http_test.go` | HTTP → servicios → SQLite, códigos de error, cabeceras |
+| UI en navegador real | `scripts/screenshots/capture.mjs` | Flujos de la interfaz con Playwright, sin errores de JS (y genera las capturas) |
 
 Cobertura actual: dominio ~97 %, servicios ~91 %, HTTP ~88 %, SQLite ~76 %.
 
