@@ -214,7 +214,7 @@ La imagen es **distroless** (sin shell), corre como **usuario no-root**, con **s
 
 `v0.1.0 MVP` ✅ → `v0.2.0 Seguridad y usuarios` → `v0.3.0 Compras y proveedores` → `v0.4.0 Operación (multi-almacén, códigos de barras)` → `v0.5.0 Analítica` → `v1.0.0 Producción`
 
-📘 Detalle: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Seguimiento en [Issues](https://github.com/MainRDSniper09/Inventory-Project-Go/issues) y [Milestones](https://github.com/MainRDSniper09/Inventory-Project-Go/milestones).
+📘 Detalle: **[docs/ROADMAP.md](docs/ROADMAP.md)** · 📋 **[Tablero del proyecto](https://github.com/users/MainRDSniper09/projects/3)** · Seguimiento en [Issues](https://github.com/MainRDSniper09/Inventory-Project-Go/issues) y [Milestones](https://github.com/MainRDSniper09/Inventory-Project-Go/milestones).
 
 ## Decisiones de arquitectura (ADR)
 
