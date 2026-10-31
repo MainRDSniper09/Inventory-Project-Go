@@ -25,7 +25,29 @@ docs: actualizar diagrama ER
 test(services): cubrir stock insuficiente al fusionar líneas
 ```
 
-Tipos: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`. GoReleaser usa estos prefijos para el changelog.
+Tipos: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`.
+
+## Publicar una versión
+
+Las versiones siguen [SemVer](https://semver.org/lang/es/) y **cada milestone es una versión**. Su título debe empezar con ella: `v0.2.0 Seguridad y usuarios`.
+
+1. Asigna cada issue al milestone de la versión donde se entregará.
+2. Pon etiquetas `type:*` a issues y PRs: con ellas se agrupan las notas de la release.
+3. Cuando todos los issues estén cerrados, **cierra el milestone** (*Issues → Milestones → Close*).
+4. El workflow [`milestone-release.yml`](.github/workflows/milestone-release.yml):
+   - valida que el título empiece con `vX.Y.Z` (si no, lo ignora);
+   - si quedan issues abiertos, **reabre el milestone** y falla listándolos en el resumen del run;
+   - crea el tag sobre el último commit de `main`;
+   - llama a [`release.yml`](.github/workflows/release.yml), que publica los binarios (GoReleaser) y la imagen `ghcr.io/<owner>/inventory-go` con las etiquetas `X.Y.Z`, `X.Y` y `latest`.
+5. Las notas incluyen la descripción del milestone, sus issues agrupados por tipo, cómo instalar esa versión y los PRs incluidos ([`release-notes.sh`](.github/scripts/release-notes.sh)).
+
+| Situación | Qué hacer |
+|---|---|
+| La release falló a mitad de camino | *Actions → Milestone release → Run workflow* con el número del milestone. Es idempotente: reutiliza el tag. |
+| Necesito un hotfix sin milestone | `git tag v0.1.1 && git push origin v0.1.1` también publica (notas sólo con los PRs). |
+| Cerré un milestone por error | Si aún había issues abiertos, se reabre solo. Si estaba completo, la release ya salió: publica una versión nueva en lugar de borrarla. |
+
+Vista previa local de las notas: `REPO=owner/repo bash .github/scripts/release-notes.sh v0.2.0 "v0.2.0 Seguridad y usuarios"`.
 
 ## Reglas de arquitectura
 

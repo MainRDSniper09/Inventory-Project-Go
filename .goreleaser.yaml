@@ -1,11 +1,13 @@
 # GoReleaser genera los "instalables": binarios para cada SO/arquitectura,
-# archivos comprimidos, checksums y la imagen Docker, al publicar un tag vX.Y.Z.
+# archivos comprimidos y checksums. Lo ejecuta .github/workflows/release.yml.
 version: 2
 project_name: inventory
 
 before:
   hooks:
-    - go mod tidy
+    # Sin `go mod tidy`: si modificara go.sum, el árbol quedaría "sucio" y
+    # GoReleaser abortaría. La coherencia de go.mod la valida CI.
+    - go mod verify
     - go test ./...
 
 builds:
@@ -30,16 +32,12 @@ archives:
 checksum:
   name_template: checksums.txt
 
+# Las notas las genera .github/scripts/release-notes.sh (issues del milestone
+# + PRs) y se pasan con --release-notes; el changelog propio no se usa.
 changelog:
-  sort: asc
-  groups:
-    - title: Features
-      regexp: '^.*?feat(\(.+\))??!?:.+$'
-      order: 0
-    - title: Bug fixes
-      regexp: '^.*?fix(\(.+\))??!?:.+$'
-      order: 1
-    - title: Others
-      order: 999
-  filters:
-    exclude: ["^docs:", "^test:", "^chore:"]
+  disable: true
+
+release:
+  # RELEASE_NAME = "v0.2.0 — Seguridad y usuarios" cuando viene de un milestone.
+  name_template: '{{ envOrDefault "RELEASE_NAME" .Tag }}'
+  mode: replace
