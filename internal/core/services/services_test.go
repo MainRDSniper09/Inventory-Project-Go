@@ -56,7 +56,7 @@ func TestProductService_CreateWithInitialStock(t *testing.T) {
 	if p.SKU != "LAP-1" || p.Quantity != 7 || p.Price != 99900 {
 		t.Fatalf("unexpected: %+v", p)
 	}
-	if len(e.store.movements) != 1 || e.store.movements[0].Reason != "initial stock" {
+	if len(e.store.movements) != 1 || e.store.movements[0].Reason != "stock inicial" {
 		t.Fatalf("expected initial stock movement, got %+v", e.store.movements)
 	}
 	if e.tx.calls != 1 {
