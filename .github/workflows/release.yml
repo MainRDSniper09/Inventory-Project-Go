@@ -86,7 +86,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/inventory-go
           # `value` permite calcular las etiquetas aunque el evento no sea un push de tag.
