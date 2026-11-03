@@ -60,4 +60,4 @@ EOF
 echo "## 🔀 Cambios incluidos"
 args=(-f tag_name="$TAG")
 [[ -n "$PREV" ]] && args+=(-f previous_tag_name="$PREV")
-gh api "repos/$REPO/releases/generate-notes" "${args[@]}" --jq .body | sed "1{/^## What.s Changed/d}"
+gh api "repos/$REPO/releases/generate-notes" "${args[@]}" --jq .body | sed -e "/^<!-- Release notes generated/d" -e "/^## What.s Changed$/d"

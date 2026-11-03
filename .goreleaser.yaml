@@ -33,9 +33,13 @@ checksum:
   name_template: checksums.txt
 
 # Las notas las genera .github/scripts/release-notes.sh (issues del milestone
-# + PRs) y se pasan con --release-notes; el changelog propio no se usa.
-changelog:
-  disable: true
+# + PRs) y se pasan con --release-notes.
+#
+# ⚠️ NO poner `changelog.disable: true`: en GoReleaser v2 el archivo de
+# --release-notes lo carga justamente la etapa "changelog"; desactivarla hace
+# que las notas se ignoren en silencio (así se publicó vacía la v0.1.0, #54).
+# Cuando se pasa --release-notes, GoReleaser usa ese archivo y no genera el
+# changelog a partir de los commits.
 
 release:
   # RELEASE_NAME = "v0.2.0 — Seguridad y usuarios" cuando viene de un milestone.
