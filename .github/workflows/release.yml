@@ -43,7 +43,7 @@ jobs:
     name: Binarios y release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
           fetch-depth: 0
@@ -58,10 +58,15 @@ jobs:
           REPO: ${{ github.repository }}
         run: bash .github/scripts/release-notes.sh "$TAG" "$MILESTONE" > "$RUNNER_TEMP/notes.md"
 
-      - name: Vista previa de las notas
-        run: cat "$RUNNER_TEMP/notes.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Validar y mostrar las notas
+        run: |
+          notes="$RUNNER_TEMP/notes.md"
+          if ! grep -q "Instalación" "$notes"; then
+            echo "::error::release-notes.sh no generó contenido válido"; cat "$notes"; exit 1
+          fi
+          cat "$notes" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
           args: release --clean --release-notes "${{ runner.temp }}/notes.md"
@@ -71,14 +76,28 @@ jobs:
           # Nombre visible de la release: "v0.1.0 — MVP" si viene de un milestone.
           RELEASE_NAME: ${{ inputs.name && format('{0} — {1}', env.TAG, inputs.name) || env.TAG }}
 
+      # Defensa ante configuraciones que ignoren --release-notes en silencio (#54).
+      - name: Verificar que la release publicada tiene notas
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          len=$(gh release view "$TAG" -R "${{ github.repository }}" --json body --jq '.body | length')
+          echo "Longitud de las notas publicadas: $len"
+          if (( len < 200 )); then
+            echo "::error::La release $TAG se publicó sin notas (longitud $len)."; exit 1
+          fi
+
   docker:
     name: Imagen Docker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.TAG }}
-      - uses: docker/setup-qemu-action@v3
+      - id: commit
+        name: Commit del tag
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
@@ -86,7 +105,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/inventory-go
           # `value` permite calcular las etiquetas aunque el evento no sea un push de tag.
@@ -101,6 +120,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Igual que el binario de GoReleaser: versión sin "v" y commit corto del tag.
           build-args: |
-            VERSION=${{ env.TAG }}
-            COMMIT=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+            COMMIT=${{ steps.commit.outputs.short }}
